@@ -8,4 +8,9 @@ const (
 	fieldExchange     = "exchange"
 	fieldIsOpen       = "is_open"
 	fieldPretradeDate = "pretrade_date"
+	fieldListStatus   = "list_status"
+	fieldName         = "name"
+	fieldArea         = "area"
+	fieldIndustry     = "industry"
+	fieldListingDate  = "list_date"
 )
