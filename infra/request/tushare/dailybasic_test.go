@@ -6,7 +6,7 @@ import (
 )
 
 func TestGetTotalMarketValueOfGiveTsCode(t *testing.T) {
-	InitClient("")
+	InitClient(GetTokenFromFile())
 	date, err := GetTotalMarketValueOfGiveTsCode("603886.SH", "20221014")
 	if err != nil {
 		t.Errorf("GetTotalMarketValueOfGiveTsCode return error %v", err)

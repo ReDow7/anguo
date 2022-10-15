@@ -10,6 +10,7 @@ func ReadFromFile(fileName string) (string, error) {
 	if err != nil {
 		return "", err
 	}
+	defer f.Close()
 	bytes, err := ioutil.ReadAll(f)
 	if err != nil {
 		return "", err

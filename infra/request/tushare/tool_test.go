@@ -6,8 +6,15 @@ import (
 	"time"
 )
 
+func TestReadTokenFromFile(t *testing.T) {
+	token := GetTokenFromFile()
+	if token == "" {
+		t.Errorf("can not read token from file")
+	}
+}
+
 func TestGetLeastCurrentMarketDate(t *testing.T) {
-	InitClient("")
+	InitClient(GetTokenFromFile())
 	date, err := GetLeastCurrentMarketDate()
 	if err != nil {
 		t.Errorf("GetLeastCurrentMarketDate return error %v", err)

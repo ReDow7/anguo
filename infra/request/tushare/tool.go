@@ -1,8 +1,9 @@
 package tushare
 
 import (
+	"anguo/infra/dal"
 	"fmt"
-	"infra/dal"
+	"os"
 	"strings"
 	"time"
 )
@@ -18,7 +19,8 @@ func (t *marketCalendar) isOpen() bool {
 }
 
 func GetTokenFromFile() string {
-	token, err := dal.ReadFromFile("token.sec")
+	pwd, _ := os.Getwd()
+	token, err := dal.ReadFromFile(pwd + "/../../../token.sec")
 	if err != nil {
 		panic(fmt.Sprintf("can not read tushare token from file %v", err))
 	}
