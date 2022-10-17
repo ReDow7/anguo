@@ -133,6 +133,7 @@ const (
 	fieldInvestLossUnconf       = "invest_loss_unconf"
 	fieldMinorityInt            = "minority_int"
 	fieldTotalHldrEqyExcMinInt  = "total_hldr_eqy_exc_min_int"
+	fieldTotalHldrEqyIncMinInt  = "total_hldr_eqy_inc_min_int"
 	fieldTotalLiabHldrEqy       = "total_liab_hldr_eqy"
 	fieldLtPayrollPayable       = "lt_payroll_payable"
 	fieldOthCompIncome          = "oth_comp_income"

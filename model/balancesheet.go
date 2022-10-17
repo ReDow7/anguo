@@ -5,15 +5,15 @@ type BalanceSheet struct {
 	EndDate                  string
 	TotalCurrentAsserts      float64
 	TotalNonCurrentAssets    float64
-	totalAssets              float64
+	TotalAssets              float64
 	TotalCurrentLiability    float64
 	TotalNonCurrentLiability float64
 	TotalLiability           float64
-	_                        OwnersEquity
-	_                        CurrentAssert
-	_                        NonCurrentAssets
-	_                        CurrentLiability
-	_                        NonCurrentLiability
+	OwnersEquity
+	CurrentAssert
+	NonCurrentAssets
+	CurrentLiability
+	NonCurrentLiability
 }
 
 type OwnersEquity struct {
@@ -130,11 +130,11 @@ type CurrentAssert struct {
 	InterestReceivable                               float64
 	Inventories                                      float64
 	PrepaidExpenses                                  float64
-	NonCurrentAssetsMaturingWithinOneYear            float64
+	NonCurrentAssetsMaturingWithInOneYear            float64
 	ProvisionOfSettlementFund                        float64
 	FundsLent                                        float64
 	InsurancePremiumsReceivable                      float64
-	AccountsReceivableReinsurance                    float64
+	ReinsurancePremiumsReceivable                    float64
 	ProvisionOfCessionReceivable                     float64
 	BuyingBackTheSaleOfFinancialAssets               float64
 	OtherCurrentAssert                               float64

@@ -18,6 +18,12 @@ func (t *marketCalendar) isOpen() bool {
 	return t.open == 1
 }
 
+func GetLastYearEndDate() string {
+	now := time.Now()
+	now = now.AddDate(-1, 0, 0)
+	return now.Format("2006") + "1231"
+}
+
 func GetTokenFromFile() string {
 	pwd, _ := os.Getwd()
 	token, err := dal.ReadFromFile(pwd + "/../../../token.sec")

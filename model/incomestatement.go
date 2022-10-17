@@ -80,7 +80,7 @@ type IncomeStatement struct {
 	NetExposureHedgingIncome                               float64
 	OtherAssertImpairmentLoss                              float64
 	IncomeFromStopOfFinancialAssetsMeasuredAtAmortizedCost float64
-	AssertImpairmentLoss                                   float64
+	AssertDisposalIncome                                   float64
 	OtherIncome                                            float64
 	ContinuedNetProfit                                     float64
 	EndNetProfit                                           float64
