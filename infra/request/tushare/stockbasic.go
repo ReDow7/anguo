@@ -16,7 +16,7 @@ func ListListingStocks() ([]model.Stock, error) {
 func getStockListFromTushare() ([]model.Stock, error) {
 	fields := strings.Join([]string{fieldTsCode, fieldName, fieldArea, fieldIndustry, fieldListingDate}, ",")
 	params := map[string]interface{}{
-		"list_status": "L",
+		fieldListStatus: "L",
 	}
 	resp, err := fetchTushareRawData("stock_basic", fields, params)
 	if err != nil {
