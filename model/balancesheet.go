@@ -41,7 +41,7 @@ type CurrentLiability struct {
 	BorrowingFromTheCentralBank                float64
 	DepositsFromCustomersAndInterBank          float64
 	LoansFromOtherBanks                        float64
-	TransactionFinancialLiabilities            float64
+	TradingFinancialLiabilities                float64
 	NotesPayable                               float64
 	AccountsPayable                            float64
 	AdvancesFromCustomers                      float64
@@ -162,4 +162,34 @@ type CurrentAssert struct {
 	ReceivableFinancing                              float64
 	ContractAssets                                   float64
 	AccountsReceivableAndBill                        float64
+}
+
+func (bs *BalanceSheet) NetOperationAssert(revenue float64) float64 {
+	return bs.TotalEquityOfOwnersIncludeMinorityInterests - bs.NetFinancialAssert(revenue)
+}
+
+func (bs *BalanceSheet) NetFinancialAssert(revenue float64) float64 {
+	return bs.FinancialAssert(revenue) - bs.FinancialLiability()
+}
+
+func (bs *BalanceSheet) FinancialAssert(revenue float64) float64 {
+	var fa float64
+	fa += bs.CashAndCashEquivalents
+	fa += bs.OtherCurrentAssert
+	fa += bs.OtherNonCurrentFinancialAssets
+	fa += bs.InvestmentProperty
+	fa += bs.OtherNonCurrentAssets
+	fa += bs.NonCurrentAssetsMaturingWithInOneYear
+	fa -= revenue * 0.1
+	return fa
+}
+
+func (bs *BalanceSheet) FinancialLiability() float64 {
+	var fl float64
+	fl += bs.ShortTermLoans
+	fl += bs.TradingFinancialLiabilities
+	fl += bs.LongTermLoans
+	fl += bs.BondPayable
+	fl += bs.NonCurrentLiabilitiesMaturingWithinOneYear
+	return fl
 }

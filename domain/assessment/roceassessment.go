@@ -1,0 +1,28 @@
+package assessment
+
+import (
+	"anguo/infra/request/tushare"
+)
+
+type ROCEAssessmentResult struct {
+	ValueUnderSustainableGrowthAt4Percent float64
+	ValueUnderSustainableGrowthAt6Percent float64
+	ValueUnderSustainableGrowthAt8Percent float64
+}
+
+func ROCEAssessment(code string, date string, WACC float64) (*ROCEAssessmentResult, error) {
+	statement, err := tushare.GetIncomeStatementFromTushareForGivenCodeAndDate(code, date)
+	if err != nil {
+		return nil, err
+	}
+	sheet, err := tushare.GetBalanceSheetForGiveCodeAndDate(code, date)
+	if err != nil {
+		return nil, err
+	}
+	var value ROCEAssessmentResult
+	re := statement.RE(sheet, WACC)
+	value.ValueUnderSustainableGrowthAt4Percent = sheet.TotalEquityOfOwnersExcludeMinorityInterests + re/(WACC-0.04)
+	value.ValueUnderSustainableGrowthAt6Percent = sheet.TotalEquityOfOwnersExcludeMinorityInterests + re/(WACC-0.06)
+	value.ValueUnderSustainableGrowthAt8Percent = sheet.TotalEquityOfOwnersExcludeMinorityInterests + re/(WACC-0.08)
+	return &value, nil
+}

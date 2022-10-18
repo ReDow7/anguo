@@ -469,7 +469,7 @@ func parseBalanceSheetRecord(resp *Response) (*model.BalanceSheet, error) {
 				}
 			case fieldTradingFl:
 				if val, ok := item[i].(float64); ok {
-					sheet.TransactionFinancialLiabilities = val
+					sheet.TradingFinancialLiabilities = val
 				}
 			case fieldNotesPayable:
 				if val, ok := item[i].(float64); ok {

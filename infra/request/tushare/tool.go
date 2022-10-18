@@ -3,7 +3,6 @@ package tushare
 import (
 	"anguo/infra/dal"
 	"fmt"
-	"os"
 	"strings"
 	"time"
 )
@@ -25,8 +24,7 @@ func GetLastYearEndDate() string {
 }
 
 func GetTokenFromFile() string {
-	pwd, _ := os.Getwd()
-	token, err := dal.ReadFromFile(pwd + "/../../../token.sec")
+	token, err := dal.ReadFromFile("/Users/redow/go/src/anguo/token.sec")
 	if err != nil {
 		panic(fmt.Sprintf("can not read tushare token from file %v", err))
 	}

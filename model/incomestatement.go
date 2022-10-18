@@ -85,3 +85,32 @@ type IncomeStatement struct {
 	ContinuedNetProfit                                     float64
 	EndNetProfit                                           float64
 }
+
+func (is *IncomeStatement) RE(sheet *BalanceSheet, WACC float64) float64 {
+	roce := is.ROCE(sheet)
+	return (roce - WACC) * sheet.NetOperationAssert(is.TotalRevenue)
+}
+
+func (is *IncomeStatement) ROCE(sheet *BalanceSheet) float64 {
+	return is.NetOperationProfit() / sheet.NetOperationAssert(is.TotalRevenue)
+}
+
+func (is *IncomeStatement) NetOperationProfit() float64 {
+	var nop float64
+	adjustRateAfterIncomeTax := 1 - is.AverageIncomeTaxRate()
+	nop += is.TotalComprehensiveIncome
+	nop += is.FinancialExpenses * adjustRateAfterIncomeTax
+	nop -= is.OtherIncome * adjustRateAfterIncomeTax
+	nop -= is.InvestmentIncome * adjustRateAfterIncomeTax
+	nop += is.InvestmentIncomeFromAssociatesAndJointVentures * adjustRateAfterIncomeTax
+	nop -= is.IncomeFromStopOfFinancialAssetsMeasuredAtAmortizedCost * adjustRateAfterIncomeTax
+	nop -= is.ExchangeNetIncome * adjustRateAfterIncomeTax
+	nop -= is.ProfitAndLossOnFluctuationOfFairMarketValue * adjustRateAfterIncomeTax
+	nop -= is.NonOperateIncome * adjustRateAfterIncomeTax
+	nop += is.NonOperateExpense * adjustRateAfterIncomeTax
+	return nop
+}
+
+func (is *IncomeStatement) AverageIncomeTaxRate() float64 {
+	return is.IncomeTax / is.TotalProfit
+}
