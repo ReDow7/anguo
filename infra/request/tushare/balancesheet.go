@@ -1,6 +1,7 @@
 package tushare
 
 import (
+	"anguo/domain/common"
 	"anguo/model"
 	"fmt"
 	"strings"
@@ -10,7 +11,7 @@ func GetBalanceSheetOfLastYearForGiveCode(code string) (*model.BalanceSheet, err
 	if code == "" {
 		return nil, fmt.Errorf("emtpy code when fetch balance sheet")
 	}
-	return GetBalanceSheetForGiveCodeAndDate(code, GetLastYearEndDate())
+	return GetBalanceSheetForGiveCodeAndDate(code, common.GetLastYearEndDate())
 }
 
 func GetBalanceSheetForGiveCodeAndDate(code, date string) (*model.BalanceSheet, error) {

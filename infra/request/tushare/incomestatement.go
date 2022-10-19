@@ -1,6 +1,7 @@
 package tushare
 
 import (
+	"anguo/domain/common"
 	"anguo/model"
 	"fmt"
 	"strings"
@@ -10,7 +11,7 @@ func GetIncomeStatementFromTushare(code string) (*model.IncomeStatement, error) 
 	if code == "" {
 		return nil, fmt.Errorf("emtpy code when fetch income statement")
 	}
-	return GetIncomeStatementFromTushareForGivenCodeAndDate(code, GetLastYearEndDate())
+	return GetIncomeStatementFromTushareForGivenCodeAndDate(code, common.GetLastYearEndDate())
 }
 
 func GetIncomeStatementFromTushareForGivenCodeAndDate(code, date string) (*model.IncomeStatement, error) {

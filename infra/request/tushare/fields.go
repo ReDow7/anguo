@@ -251,4 +251,7 @@ const (
 	fieldAssetDispIncome        = "asset_disp_income"
 	fieldContinuedNetProfit     = "continued_net_profit"
 	fieldEndNetProfit           = "end_net_profit"
+	fieldDivProc                = "div_proc"
+	fieldCashDivTax             = "cash_div_tax"
+	fieldBaseShare              = "base_share"
 )

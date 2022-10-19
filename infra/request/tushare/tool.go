@@ -17,12 +17,6 @@ func (t *marketCalendar) isOpen() bool {
 	return t.open == 1
 }
 
-func GetLastYearEndDate() string {
-	now := time.Now()
-	now = now.AddDate(-1, 0, 0)
-	return now.Format("2006") + "1231"
-}
-
 func GetTokenFromFile() string {
 	token, err := dal.ReadFromFile("/Users/redow/go/src/anguo/token.sec")
 	if err != nil {

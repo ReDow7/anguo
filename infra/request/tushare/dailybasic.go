@@ -45,7 +45,7 @@ func parseDailyBasicRecord(resp *Response) (*dailyBasic, error) {
 			}
 		case fieldTotalMv:
 			if val, ok := resp.Data.Items[0][i].(float64); ok {
-				ret.totalMarketValue = val
+				ret.totalMarketValue = val * 10000
 			}
 		case fieldCalDate:
 			if str, ok := resp.Data.Items[0][i].(string); ok {
