@@ -1,6 +1,7 @@
 package scene
 
 import (
+	"anguo/domain/assessment"
 	"anguo/infra/request/tushare"
 	"fmt"
 	"math"
@@ -29,6 +30,27 @@ func TestFileSave(t *testing.T) {
 		data["1123"].date != "20061231" {
 		t.Errorf("testFileSave data read error \n")
 		return
+	}
+}
+
+func TestCompareValueOfAssessmentWithAllStock(t *testing.T) {
+	tushare.InitClient(tushare.GetTokenFromFile())
+	result, err := CompareAllStockValueOfAssessmentWithPriceNow(0, 3)
+	if err != nil {
+		t.Errorf("CompareAllStockValueOfAssessmentWithPriceNow return error\n")
+	}
+	if len(result) != 3 {
+		t.Errorf("CompareAllStockValueOfAssessmentWithPriceNow return data is not expected\n")
+	}
+	assessmentFunc = func(code string, date string, WACC float64) (*assessment.ROCEAssessmentResult, error) {
+		return nil, fmt.Errorf("intend error for unit test")
+	}
+	result, err = CompareAllStockValueOfAssessmentWithPriceNow(0, 3)
+	if err != nil {
+		t.Errorf("CompareAllStockValueOfAssessmentWithPriceNow return error after first time\n")
+	}
+	if len(result) != 3 {
+		t.Errorf("CompareAllStockValueOfAssessmentWithPriceNow return data is not expected after first time\n")
 	}
 }
 

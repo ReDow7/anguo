@@ -29,6 +29,8 @@ type CompareResult struct {
 	ratio float64
 }
 
+var assessmentFunc = assessment.ROCEAssessment
+
 func readHistoryFromFile() map[string]*dataSavedEntry {
 	var ret = make(map[string]*dataSavedEntry)
 	saved, err := dal.ReadFromFile(dataFileName)
@@ -112,16 +114,21 @@ func isCompareRatioMoreThanThreshold(historyAssessmentValues map[string]*dataSav
 	bool, float64, error) {
 	var err error
 	var ratio *float64
+	needCalAssessment := true
 	if saveEntry, ok := historyAssessmentValues[tsCode]; ok {
 		if saveEntry.date == endDate {
 			_, _, ratio, err = CompareValueOfAssessmentWithPriceNow(tsCode, &saveEntry.assessmentValue)
+			needCalAssessment = false
 		}
 	}
-	value, _, ratio, err := CompareValueOfAssessmentWithPriceNow(tsCode, nil)
-	historyAssessmentValues[tsCode] = &dataSavedEntry{
-		code:            tsCode,
-		date:            endDate,
-		assessmentValue: *value,
+	if needCalAssessment {
+		var value *float64
+		value, _, ratio, err = CompareValueOfAssessmentWithPriceNow(tsCode, nil)
+		historyAssessmentValues[tsCode] = &dataSavedEntry{
+			code:            tsCode,
+			date:            endDate,
+			assessmentValue: *value,
+		}
 	}
 	if err != nil {
 		return false, 0, err
@@ -150,7 +157,7 @@ func CompareValueOfAssessmentWithPriceNow(tsCode string, assessmentValueGiven *f
 			ValueUnderSustainableGrowthAt8Percent: *assessmentValueGiven,
 		}
 	} else {
-		assessmentValues, err = assessment.ROCEAssessment(tsCode, common.GetLastYearEndDate(), averageWACC)
+		assessmentValues, err = assessmentFunc(tsCode, common.GetLastYearEndDate(), averageWACC)
 		if err != nil {
 			return nil, nil, nil, err
 		}
