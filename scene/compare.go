@@ -8,14 +8,16 @@ import (
 	"anguo/model"
 	"bytes"
 	"fmt"
+	"sort"
 	"strconv"
 	"strings"
 	"time"
 )
 
 const (
-	averageWACC  = 0.1
-	dataFileName = "compare.sec"
+	averageWACC           = 0.1
+	dataFileName          = "compare.sec"
+	compareResultFileName = "compare.result.sec"
 )
 
 type dataSavedEntry struct {
@@ -25,8 +27,14 @@ type dataSavedEntry struct {
 }
 
 type CompareResult struct {
-	stock model.Stock
-	ratio float64
+	Stock      model.Stock
+	Ratio      float64
+	PriceValue float64
+}
+
+type historyCompareResult struct {
+	code         string
+	compareRatio float64
 }
 
 var assessmentFunc = assessment.ROCEAssessment
@@ -101,12 +109,90 @@ func CompareAllStockValueOfAssessmentWithPriceNow(compareThreshold float64, numb
 		}
 		if pick {
 			picks = append(picks, &CompareResult{
-				stock, ratio,
+				stock, ratio, historyAssessmentValues[stock.Code].assessmentValue,
 			})
 		}
 	}
 	saveDataToFile(historyAssessmentValues)
+	outputCompareResult(picks)
 	return picks, nil
+}
+
+func outputCompareResult(results []*CompareResult) {
+	if len(results) <= 0 {
+		fmt.Println("--NO COMPARE RESULT THIS TIME--")
+		return
+	}
+	history := readHistoryCompareResultFromFile()
+	listBefore := make(map[string]bool)
+	for _, saved := range history {
+		listBefore[saved.code] = true
+	}
+	sort.Slice(results, func(i, j int) bool {
+		return results[i].Ratio > results[j].Ratio
+	})
+	fmt.Println("Code\tName\tRatio\tpriceValue\tIndustry")
+	for _, result := range results {
+		if !listBefore[result.Stock.Code] {
+			continue
+		}
+		fmt.Printf("%s\t%s\t%.2f\t%.2fm\t%s\n", result.Stock.Code, result.Stock.Name, result.Ratio,
+			result.PriceValue/1000000.0, result.Stock.Industry)
+	}
+	fmt.Println("--NEW LIST OF THIS TIME--")
+	for _, result := range results {
+		if listBefore[result.Stock.Code] {
+			continue
+		}
+		fmt.Printf("%s\t%s\t%.2f\t%.2fm\t%s\n", result.Stock.Code, result.Stock.Name, result.Ratio,
+			result.PriceValue/1000000.0, result.Stock.Industry)
+	}
+	saveCompareResultToFile(results)
+}
+
+func saveCompareResultToFile(data []*CompareResult) {
+	if len(data) == 0 {
+		_ = fmt.Errorf("no compare result need to write, return directly\n")
+		return
+	}
+	var buf bytes.Buffer
+	for _, entry := range data {
+		buf.WriteString(strings.Join([]string{entry.Stock.Code, fmt.Sprintf("%.2f", entry.Ratio)}, ","))
+		buf.WriteString("\n")
+	}
+	err := dal.WriteToFileOverWrite(compareResultFileName, buf.String())
+	if err != nil {
+		_ = fmt.Errorf("can not write to file for compare result with error : %v\n", err)
+		return
+	}
+	fmt.Printf("write to file success compare results : %d\n", len(data))
+}
+
+func readHistoryCompareResultFromFile() []*historyCompareResult {
+	var ret = make([]*historyCompareResult, 0)
+	saved, err := dal.ReadFromFile(compareResultFileName)
+	if err != nil {
+		_ = fmt.Errorf("can not read compare result from file with error : %v\n", err)
+		return ret
+	}
+	lines := strings.Split(saved, "\n")
+	for _, line := range lines {
+		parts := strings.Split(line, ",")
+		if len(parts) != 2 {
+			_ = fmt.Errorf("a valid line from file : %s\n", line)
+			continue
+		}
+		value, err := strconv.ParseFloat(parts[1], 64)
+		if err != nil {
+			_ = fmt.Errorf("a valid value line from file : %s\n", line)
+			continue
+		}
+		ret = append(ret, &historyCompareResult{
+			parts[0], value,
+		})
+	}
+	fmt.Printf("%d lines read from compare history file successfully\n", len(ret))
+	return ret
 }
 
 func isCompareRatioMoreThanThreshold(historyAssessmentValues map[string]*dataSavedEntry,
