@@ -6,7 +6,7 @@ import (
 )
 
 func WriteToFileOverWrite(fileName string, body string) error {
-	f, err := os.OpenFile(fileName, os.O_CREATE|os.O_RDWR, 0644)
+	f, err := os.OpenFile(fileName, os.O_CREATE|os.O_RDWR|os.O_TRUNC, 0644)
 	if err != nil {
 		return err
 	}

@@ -140,18 +140,6 @@ func outputCompareResult(results []*CompareResult, endDate string) {
 		if listBefore[result.Stock.Code] == nil {
 			continue
 		}
-		dividendRate := collectAverageDividendRate(result.Stock.Code, endDate)
-		alerts := CollectAlertInfosForCodeAndDataGive(result.Stock.Code, endDate)
-		result.averageDividendRate = dividendRate
-		result.alerts = alerts
-		fmt.Printf("%s\t%s\t%.2f\t%.2fm\t%s\t%.2f\t%s\n", result.Stock.Code, result.Stock.Name, result.Ratio,
-			result.PriceValue/1000000.0, result.Stock.Industry, dividendRate, generateAlertInfoToSave(alerts))
-	}
-	fmt.Println("--NEW LIST OF THIS TIME--")
-	for _, result := range results {
-		if listBefore[result.Stock.Code] != nil {
-			continue
-		}
 		saved := listBefore[result.Stock.Code]
 		if saved.averageDividendRate < -1e-8 {
 			saved.averageDividendRate = collectAverageDividendRate(result.Stock.Code, endDate)
@@ -161,6 +149,19 @@ func outputCompareResult(results []*CompareResult, endDate string) {
 		}
 		result.averageDividendRate = saved.averageDividendRate
 		result.alerts = saved.alertInfo
+		fmt.Printf("%s\t%s\t%.2f\t%.2fm\t%s\t%.2f\t%s\n", result.Stock.Code, result.Stock.Name, result.Ratio,
+			result.PriceValue/1000000.0, result.Stock.Industry,
+			result.averageDividendRate, generateAlertInfoToSave(result.alerts))
+	}
+	fmt.Println("--NEW LIST OF THIS TIME--")
+	for _, result := range results {
+		if listBefore[result.Stock.Code] != nil {
+			continue
+		}
+		dividendRate := collectAverageDividendRate(result.Stock.Code, endDate)
+		alerts := CollectAlertInfosForCodeAndDataGive(result.Stock.Code, endDate)
+		result.averageDividendRate = dividendRate
+		result.alerts = alerts
 		fmt.Printf("%s\t%s\t%.2f\t%.2fm\t%s\t%.2f\t%s\n", result.Stock.Code, result.Stock.Name, result.Ratio,
 			result.PriceValue/1000000.0, result.Stock.Industry,
 			result.averageDividendRate, generateAlertInfoToSave(result.alerts))
@@ -301,7 +302,7 @@ func isCompareRatioMoreThanThreshold(historyAssessmentValues map[string]*dataSav
 }
 
 func hasListLongThanThreeYears(stock *model.Stock) bool {
-	listTime, err := time.Parse(stock.ListingDate, "20060102")
+	listTime, err := time.Parse("20060102", stock.ListingDate)
 	if err != nil {
 		_ = fmt.Errorf("encouter a not valid list date %s\n", stock.ListingDate)
 		return true

@@ -7,7 +7,7 @@ import (
 )
 
 func GetThreeYearsAverageDividendForCodeAndDateGive(code, date string) (*float64, error) {
-	thisYear, err := time.Parse(date, "20060102")
+	thisYear, err := time.Parse("20060102", date)
 	if err != nil {
 		return nil, fmt.Errorf("error when parse time of thisYear val: %s\n", thisYear)
 	}
@@ -18,7 +18,7 @@ func GetThreeYearsAverageDividendForCodeAndDateGive(code, date string) (*float64
 	}
 	totalCashAmount := 0.0
 	for _, d := range dividend {
-		dividendTime, err := time.Parse(d.Date, "20060102")
+		dividendTime, err := time.Parse("20060102", d.Date)
 		if err != nil {
 			return nil, err
 		}
