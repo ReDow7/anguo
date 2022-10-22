@@ -48,7 +48,7 @@ func hasHasLossInThreeYearsAlert(last3Years []float64) bool {
 }
 
 func getLast3YearsTotalComprehensiveIncome(code, date string) ([]float64, error) {
-	ret := make([]float64, 3)
+	ret := make([]float64, 0)
 	thisYear, err := time.Parse("20060102", date)
 	if err != nil {
 		return nil, fmt.Errorf("error when parse time of thisYear val: %s\n", thisYear)

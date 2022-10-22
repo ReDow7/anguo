@@ -21,6 +21,9 @@ func ROCEAssessment(code string, date string, WACC float64) (*ROCEAssessmentResu
 	}
 	var value ROCEAssessmentResult
 	re := statement.RE(sheet, WACC)
+	if re < 0 {
+		re = 0
+	}
 	value.ValueUnderSustainableGrowthAt4Percent = sheet.TotalEquityOfOwnersExcludeMinorityInterests + re/(WACC-0.04)
 	value.ValueUnderSustainableGrowthAt6Percent = sheet.TotalEquityOfOwnersExcludeMinorityInterests + re/(WACC-0.06)
 	value.ValueUnderSustainableGrowthAt8Percent = sheet.TotalEquityOfOwnersExcludeMinorityInterests + re/(WACC-0.08)

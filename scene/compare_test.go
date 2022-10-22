@@ -38,20 +38,26 @@ func TestCompareValueOfAssessmentWithAllStock(t *testing.T) {
 	result, err := CompareAllStockValueOfAssessmentWithPriceNow(0, 3)
 	if err != nil {
 		t.Errorf("CompareAllStockValueOfAssessmentWithPriceNow return error\n")
+		return
 	}
 	if len(result) != 3 {
 		t.Errorf("CompareAllStockValueOfAssessmentWithPriceNow return data is not expected\n")
+		return
 	}
+	tempFunc := assessmentFunc
 	assessmentFunc = func(code string, date string, WACC float64) (*assessment.ROCEAssessmentResult, error) {
 		return nil, fmt.Errorf("intend error for unit test")
 	}
 	result, err = CompareAllStockValueOfAssessmentWithPriceNow(0, 3)
 	if err != nil {
 		t.Errorf("CompareAllStockValueOfAssessmentWithPriceNow return error after first time\n")
+		return
 	}
 	if len(result) != 3 {
 		t.Errorf("CompareAllStockValueOfAssessmentWithPriceNow return data is not expected after first time\n")
+		return
 	}
+	assessmentFunc = tempFunc
 }
 
 func TestCompareValueOfAssessmentWithPriceNow(t *testing.T) {
