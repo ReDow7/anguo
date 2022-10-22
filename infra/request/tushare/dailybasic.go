@@ -10,12 +10,12 @@ type dailyBasic struct {
 	totalMarketValue float64
 }
 
-func GetTotalMarketValueOfGiveTsCode(tsCode, date string) (float64, error) {
+func GetTotalMarketValueOfGiveTsCode(tsCode, date string) (*float64, error) {
 	di, err := getDailyBasicFromTushare(tsCode, date)
 	if err != nil {
-		return -1e20, err
+		return nil, err
 	}
-	return di.totalMarketValue, nil
+	return &di.totalMarketValue, nil
 }
 
 func getDailyBasicFromTushare(tsCode, date string) (*dailyBasic, error) {
