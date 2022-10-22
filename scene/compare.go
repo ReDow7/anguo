@@ -20,6 +20,8 @@ const (
 	compareResultFileName = "compare.result.sec"
 )
 
+var OutputFile = ""
+
 type dataSavedEntry struct {
 	code            string
 	assessmentValue float64
@@ -127,6 +129,7 @@ func outputCompareResult(results []*CompareResult, endDate string) {
 		fmt.Println("--NO COMPARE RESULT THIS TIME--")
 		return
 	}
+	var buf bytes.Buffer
 	history := readHistoryCompareResultFromFile()
 	listBefore := make(map[string]*historyCompareResult)
 	for _, saved := range history {
@@ -135,7 +138,9 @@ func outputCompareResult(results []*CompareResult, endDate string) {
 	sort.Slice(results, func(i, j int) bool {
 		return results[i].Ratio > results[j].Ratio
 	})
-	fmt.Println("Code\tName\tRatio\tpriceValue\tIndustry\tDividend\tAlertInfo")
+	if outputToFile() {
+		buf.WriteString("Code\tName\tRatio\tpriceValue\tIndustry\tDividend\tAlertInfo")
+	}
 	for _, result := range results {
 		if listBefore[result.Stock.Code] == nil {
 			continue
@@ -149,9 +154,17 @@ func outputCompareResult(results []*CompareResult, endDate string) {
 		}
 		result.averageDividendRate = saved.averageDividendRate
 		result.alerts = saved.alertInfo
+		if outputToFile() {
+			buf.WriteString(fmt.Sprintf("%s\t%s\t%.2f\t%.2fm\t%s\t%.2f\t%s\n", result.Stock.Code, result.Stock.Name, result.Ratio,
+				result.PriceValue/1000000.0, result.Stock.Industry,
+				result.averageDividendRate, generateAlertInfoToSave(result.alerts)))
+		}
 		fmt.Printf("%s\t%s\t%.2f\t%.2fm\t%s\t%.2f\t%s\n", result.Stock.Code, result.Stock.Name, result.Ratio,
 			result.PriceValue/1000000.0, result.Stock.Industry,
 			result.averageDividendRate, generateAlertInfoToSave(result.alerts))
+	}
+	if outputToFile() {
+		buf.WriteString("--NEW LIST OF THIS TIME--")
 	}
 	fmt.Println("--NEW LIST OF THIS TIME--")
 	for _, result := range results {
@@ -162,11 +175,23 @@ func outputCompareResult(results []*CompareResult, endDate string) {
 		alerts := CollectAlertInfosForCodeAndDataGive(result.Stock.Code, endDate)
 		result.averageDividendRate = dividendRate
 		result.alerts = alerts
+		if outputToFile() {
+			buf.WriteString(fmt.Sprintf("%s\t%s\t%.2f\t%.2fm\t%s\t%.2f\t%s\n", result.Stock.Code, result.Stock.Name, result.Ratio,
+				result.PriceValue/1000000.0, result.Stock.Industry,
+				result.averageDividendRate, generateAlertInfoToSave(result.alerts)))
+		}
 		fmt.Printf("%s\t%s\t%.2f\t%.2fm\t%s\t%.2f\t%s\n", result.Stock.Code, result.Stock.Name, result.Ratio,
 			result.PriceValue/1000000.0, result.Stock.Industry,
 			result.averageDividendRate, generateAlertInfoToSave(result.alerts))
 	}
 	saveCompareResultToFile(results)
+	if outputToFile() {
+		_ = dal.WriteToFileOverWrite(OutputFile, buf.String())
+	}
+}
+
+func outputToFile() bool {
+	return len(OutputFile) > 0
 }
 
 func collectAverageDividendRate(code, endDate string) float64 {

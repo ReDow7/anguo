@@ -9,8 +9,9 @@ import (
 )
 
 var (
-	Token = ""
-	Scene = ""
+	Token  = ""
+	Scene  = ""
+	Output = ""
 )
 
 func main() {
@@ -26,8 +27,10 @@ func parseTokenFromCmdParams() {
 	if Token == "" {
 		panic("can not run without a scene given")
 	}
+	flag.StringVar(&Output, "output", "", "file path to output result ")
 	tushare.InitClient(Token)
 	if Scene == "all" {
+		scene.OutputFile = Output
 		_, err := scene.CompareAllStockValueOfAssessmentWithPriceNow(1, 10000)
 		if err != nil {
 			fmt.Printf("error in all %v\n", err)
