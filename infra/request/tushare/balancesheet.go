@@ -178,17 +178,16 @@ func getBalanceSheetFromTushare(code, date string) (*model.BalanceSheet, error) 
 		fieldUpdateFlag,
 	}, ",")
 	params := map[string]interface{}{
-		fieldEndDate: date,
-		fieldTsCode:  code,
+		fieldTsCode: code,
 	}
 	resp, err := fetchTushareRawData("balancesheet", fields, params)
 	if err != nil {
 		return nil, err
 	}
-	return parseBalanceSheetRecord(resp)
+	return parseBalanceSheetRecord(date, resp)
 }
 
-func parseBalanceSheetRecord(resp *Response) (*model.BalanceSheet, error) {
+func parseBalanceSheetRecord(date string, resp *Response) (*model.BalanceSheet, error) {
 	err := resp.anyError()
 	if err != nil {
 		return nil, err
@@ -821,11 +820,18 @@ func parseBalanceSheetRecord(resp *Response) (*model.BalanceSheet, error) {
 	if len(sheets) == 0 {
 		return nil, fmt.Errorf("can not fetch balance sheet from tushare")
 	}
-	return findLastBalanceSheet(sheets), nil
+	return findLastBalanceSheet(date, sheets), nil
 }
 
-func findLastBalanceSheet(sheets []model.BalanceSheet) *model.BalanceSheet {
-	return &sheets[len(sheets)-1]
+func findLastBalanceSheet(endDate string, sheets []model.BalanceSheet) *model.BalanceSheet {
+	buf := make([]model.BalanceSheet, 0)
+	for _, state := range sheets {
+		// end_date in the params CAN NOT filter the statements, we must filter it manually
+		if state.EndDate == endDate {
+			buf = append(buf, state)
+		}
+	}
+	return &buf[0]
 }
 
 func isNeedOverWrite(new, old float64) bool {

@@ -103,19 +103,19 @@ func GetIncomeStatementFromTushareForGivenCodeAndDate(code, date string) (*model
 		fieldAssetDispIncome,
 		fieldContinuedNetProfit,
 		fieldEndNetProfit,
+		fieldEndDate,
 	}, ",")
 	params := map[string]interface{}{
-		fieldEndDate: date,
-		fieldTsCode:  code,
+		fieldTsCode: code,
 	}
 	resp, err := fetchTushareRawData("income", fields, params)
 	if err != nil {
 		return nil, err
 	}
-	return parseIncomeStatementRecord(resp)
+	return parseIncomeStatementRecord(date, resp)
 }
 
-func parseIncomeStatementRecord(resp *Response) (*model.IncomeStatement, error) {
+func parseIncomeStatementRecord(endDate string, resp *Response) (*model.IncomeStatement, error) {
 	err := resp.anyError()
 	if err != nil {
 		return nil, err
@@ -480,9 +480,16 @@ func parseIncomeStatementRecord(resp *Response) (*model.IncomeStatement, error) 
 	if len(statements) == 0 {
 		return nil, fmt.Errorf("can not fetch balance statement from tushare")
 	}
-	return findLastIncomeStatement(statements), nil
+	return findLastIncomeStatement(endDate, statements), nil
 }
 
-func findLastIncomeStatement(statements []model.IncomeStatement) *model.IncomeStatement {
-	return &statements[len(statements)-1]
+func findLastIncomeStatement(endData string, statements []model.IncomeStatement) *model.IncomeStatement {
+	buf := make([]model.IncomeStatement, 0)
+	for _, states := range statements {
+		// end_date in the params CAN NOT filter the statements, we must filter it manually
+		if states.EndDate == endData {
+			buf = append(buf, states)
+		}
+	}
+	return &buf[0]
 }

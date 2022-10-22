@@ -12,9 +12,9 @@ func TestGetTotalMarketValueOfGiveTsCode(t *testing.T) {
 		t.Errorf("GetTotalMarketValueOfGiveTsCode return error %v", err)
 		return
 	}
-	if date < 1.0 {
+	if *date < 1.0 {
 		t.Errorf("GetTotalMarketValueOfGiveTsCode's result not valid value: %v", date)
 		return
 	}
-	fmt.Println(date)
+	fmt.Println(*date)
 }

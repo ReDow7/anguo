@@ -1,6 +1,7 @@
 package tushare
 
 import (
+	"anguo/domain/common"
 	"fmt"
 	"testing"
 )
@@ -13,6 +14,10 @@ func TestGetBalanceSheetOfLastYearForGiveCode(t *testing.T) {
 		return
 	}
 	if date.TotalCurrentAsserts < 1.0 {
+		t.Errorf("GetBalanceSheetOfLastYearForGiveCode's result not valid value: %v", date)
+		return
+	}
+	if date.EndDate != common.GetLastYearEndDate() {
 		t.Errorf("GetBalanceSheetOfLastYearForGiveCode's result not valid value: %v", date)
 		return
 	}
