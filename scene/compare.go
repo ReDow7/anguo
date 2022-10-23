@@ -100,6 +100,7 @@ func CompareAllStockValueOfAssessmentWithPriceNow(compareThreshold float64, numb
 	endDate := common.GetLastYearEndDate()
 	var picks []*CompareResult
 	for i, stock := range stocks {
+		fmt.Printf("compare process %d/%d\n", i, len(stocks))
 		if i == numberLimit {
 			fmt.Printf("touch number limit %d\n", numberLimit)
 			break
@@ -139,8 +140,10 @@ func outputCompareResult(results []*CompareResult, endDate string) {
 		return results[i].Ratio > results[j].Ratio
 	})
 	if outputToFile() {
-		buf.WriteString("Code\tName\tRatio\tpriceValue\tIndustry\tDividend\tAlertInfo")
+		buf.WriteString("Code\tName\tRatio\tpriceValue\tIndustry\tDividend\tAlertInfo\n")
 	}
+
+	fmt.Println("Code\tName\tRatio\tpriceValue\tIndustry\tDividend\tAlertInfo")
 	for _, result := range results {
 		if listBefore[result.Stock.Code] == nil {
 			continue
