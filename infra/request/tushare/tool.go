@@ -13,6 +13,9 @@ type marketCalendar struct {
 	dateOfLastMarketDay string
 }
 
+var cacheDay = ""
+var cacheTime = time.Now()
+
 func (t *marketCalendar) isOpen() bool {
 	return t.open == 1
 }
@@ -30,6 +33,9 @@ func GetLeastCurrentMarketDate() (string, error) {
 }
 
 func GetLeastCurrentMarketDateOfGiven(given string) (string, error) {
+	if isCacheCanBeUsed() {
+		return cacheDay, nil
+	}
 	if given == "" {
 		given = currentDate()
 	}
@@ -38,10 +44,21 @@ func GetLeastCurrentMarketDateOfGiven(given string) (string, error) {
 		return "", err
 	}
 	if tc.isOpen() {
+		cacheDay = tc.date
+		cacheTime = time.Now()
 		return tc.date, nil
 	} else {
+		cacheDay = tc.dateOfLastMarketDay
+		cacheTime = time.Now()
 		return tc.dateOfLastMarketDay, nil
 	}
+}
+
+func isCacheCanBeUsed() bool {
+	if len(cacheDay) == 0 {
+		return false
+	}
+	return time.Now().Add(time.Hour * -1).Before(cacheTime)
 }
 
 func currentDate() string {

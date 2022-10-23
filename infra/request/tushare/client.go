@@ -43,14 +43,14 @@ func (r *Response) anyError() error {
 	}
 	lengthOfFields := len(r.Data.Fields)
 	if lengthOfFields == 0 {
-		fmt.Errorf("tushare response with no fields")
+		return fmt.Errorf("tushare response with no fields")
 	}
 	if len(r.Data.Items) == 0 {
 		return fmt.Errorf("encouter an empty data.Items fetched from tushare")
 	}
 	for _, val := range r.Data.Items {
 		if len(val) != lengthOfFields {
-			fmt.Errorf("tushare response with fields and values size mismatch %d vs %d",
+			return fmt.Errorf("tushare response with fields and values size mismatch %d vs %d",
 				len(val), lengthOfFields)
 		}
 	}
@@ -106,6 +106,9 @@ func (c *Client) requestWithRetries(body io.Reader, retries int) (*Response, err
 		return nil, err
 	}
 	if res.Code != 0 {
+		if len(res.Message) == 0 {
+			res.Message = fmt.Sprintf("tushare return error with code : %d", res.Code)
+		}
 		return nil, errors.New(res.Message)
 	}
 	return &res, nil

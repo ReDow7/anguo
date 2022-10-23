@@ -27,7 +27,7 @@ func doInitUseParamsInput() {
 func choiceAndRunAScene() {
 	if Scene == "all" {
 		scene.OutputFile = Output
-		_, err := scene.CompareAllStockValueOfAssessmentWithPriceNow(1, 10000)
+		_, err := scene.CompareAllStockValueOfAssessmentWithPriceNow(1, 500)
 		if err != nil {
 			fmt.Printf("error in all %v\n", err)
 			os.Exit(1)

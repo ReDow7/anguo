@@ -49,19 +49,19 @@ func readHistoryFromFile() map[string]*dataSavedEntry {
 	var ret = make(map[string]*dataSavedEntry)
 	saved, err := dal.ReadFromFile(dataFileName)
 	if err != nil {
-		_ = fmt.Errorf("can not read from file with error : %v\n", err)
+		fmt.Printf("can not read from file with error : %v\n", err)
 		return ret
 	}
 	lines := strings.Split(saved, "\n")
 	for _, line := range lines {
 		parts := strings.Split(line, ",")
 		if len(parts) != 3 {
-			_ = fmt.Errorf("a valid line from file : %s\n", line)
+			fmt.Printf("a valid line from file : %s\n", line)
 			continue
 		}
 		value, err := strconv.ParseFloat(parts[2], 64)
 		if err != nil {
-			_ = fmt.Errorf("a valid value line from file : %s\n", line)
+			fmt.Printf("a valid value line from file : %s\n", line)
 			continue
 		}
 		ret[parts[0]] = &dataSavedEntry{
@@ -74,7 +74,7 @@ func readHistoryFromFile() map[string]*dataSavedEntry {
 
 func saveDataToFile(data map[string]*dataSavedEntry) {
 	if len(data) == 0 {
-		_ = fmt.Errorf("no date to write, return directly\n")
+		fmt.Printf("no date to write, return directly\n")
 		return
 	}
 	var buf bytes.Buffer
@@ -85,7 +85,7 @@ func saveDataToFile(data map[string]*dataSavedEntry) {
 	}
 	err := dal.WriteToFileOverWrite(dataFileName, buf.String())
 	if err != nil {
-		_ = fmt.Errorf("can not write to file with error : %v\n", err)
+		fmt.Printf("can not write to file with error : %v\n", err)
 		return
 	}
 	fmt.Printf("write to file success data entries : %d\n", len(data))
@@ -111,7 +111,7 @@ func CompareAllStockValueOfAssessmentWithPriceNow(compareThreshold float64, numb
 		pick, ratio, mv, err := isCompareRatioMoreThanThreshold(
 			historyAssessmentValues, stock.Code, endDate, compareThreshold)
 		if err != nil {
-			_ = fmt.Errorf("error when comapre on code %s and date %s, %v\n", stock.Code, endDate, err)
+			fmt.Printf("error when comapre on code %s and date %s, %v\n", stock.Code, endDate, err)
 			continue
 		}
 		if pick {
@@ -167,7 +167,7 @@ func outputCompareResult(results []*CompareResult, endDate string) {
 			result.averageDividendRate, generateAlertInfoToSave(result.alerts))
 	}
 	if outputToFile() {
-		buf.WriteString("--NEW LIST OF THIS TIME--")
+		buf.WriteString("--NEW LIST OF THIS TIME--\n")
 	}
 	fmt.Println("--NEW LIST OF THIS TIME--")
 	for _, result := range results {
@@ -223,7 +223,7 @@ func collectAverageDividendRate(code, endDate string) float64 {
 
 func saveCompareResultToFile(data []*CompareResult) {
 	if len(data) == 0 {
-		_ = fmt.Errorf("no compare result need to write, return directly\n")
+		fmt.Printf("no compare result need to write, return directly\n")
 		return
 	}
 	var buf bytes.Buffer
@@ -235,7 +235,7 @@ func saveCompareResultToFile(data []*CompareResult) {
 	}
 	err := dal.WriteToFileOverWrite(compareResultFileName, buf.String())
 	if err != nil {
-		_ = fmt.Errorf("can not write to file for compare result with error : %v\n", err)
+		fmt.Printf("can not write to file for compare result with error : %v\n", err)
 		return
 	}
 	fmt.Printf("write to file success compare results : %d\n", len(data))
@@ -245,28 +245,28 @@ func readHistoryCompareResultFromFile() []*historyCompareResult {
 	var ret = make([]*historyCompareResult, 0)
 	saved, err := dal.ReadFromFile(compareResultFileName)
 	if err != nil {
-		_ = fmt.Errorf("can not read compare result from file with error : %v\n", err)
+		fmt.Printf("can not read compare result from file with error : %v\n", err)
 		return ret
 	}
 	lines := strings.Split(saved, "\n")
 	for _, line := range lines {
 		parts := strings.Split(line, ",")
 		if len(parts) != 4 {
-			_ = fmt.Errorf("a valid line from file : %s\n", line)
+			fmt.Printf("a valid line from file : %s\n", line)
 			continue
 		}
 		value, err := strconv.ParseFloat(parts[1], 64)
 		if err != nil {
-			_ = fmt.Errorf("a valid value line from file : %s\n", line)
+			fmt.Printf("a valid value line from file : %s\n", line)
 			continue
 		}
-		averageDividenRate, err := strconv.ParseFloat(parts[2], 64)
+		averageDividendRate, err := strconv.ParseFloat(parts[2], 64)
 		if err != nil {
-			_ = fmt.Errorf("a valid value line from file : %s\n", line)
+			fmt.Printf("a valid value line from file : %s\n", line)
 			continue
 		}
 		ret = append(ret, &historyCompareResult{
-			parts[0], value, averageDividenRate, parseAlertInfo(parts[3]),
+			parts[0], value, averageDividendRate, parseAlertInfo(parts[3]),
 		})
 	}
 	fmt.Printf("%d lines read from compare history file successfully\n", len(ret))
@@ -282,7 +282,7 @@ func parseAlertInfo(str string) []AlertInfo {
 	for _, info := range segs {
 		val, err := strconv.Atoi(info)
 		if err != nil {
-			fmt.Errorf("a valid val read from file, %s\n", str)
+			fmt.Printf("a valid val read from file, %s\n", str)
 			continue
 		}
 		ret = append(ret, AlertInfo(val))
@@ -317,6 +317,9 @@ func isCompareRatioMoreThanThreshold(historyAssessmentValues map[string]*dataSav
 	if needCalAssessment {
 		var value *float64
 		value, mv, ratio, err = CompareValueOfAssessmentWithPriceNow(tsCode, nil)
+		if err != nil {
+			return false, 0, 0, err
+		}
 		historyAssessmentValues[tsCode] = &dataSavedEntry{
 			code:            tsCode,
 			date:            endDate,
@@ -332,7 +335,7 @@ func isCompareRatioMoreThanThreshold(historyAssessmentValues map[string]*dataSav
 func hasListLongThanThreeYears(stock *model.Stock) bool {
 	listTime, err := time.Parse("20060102", stock.ListingDate)
 	if err != nil {
-		_ = fmt.Errorf("encouter a not valid list date %s\n", stock.ListingDate)
+		fmt.Printf("encouter a not valid list date %s\n", stock.ListingDate)
 		return true
 	}
 	now := time.Now()
