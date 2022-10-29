@@ -9,6 +9,7 @@ import (
 	"io/ioutil"
 	"log"
 	"net/http"
+	"time"
 )
 
 const (
@@ -17,9 +18,11 @@ const (
 	timeLayout             = "20060102"
 )
 
+var tht = newThrottle(true, 200)
+
 type Response struct {
 	Code      int
-	Message   string
+	Message   string       `json:"msg"`
 	RequestId string       `json:"request_id"`
 	Data      ResponseData `json:"data"`
 }
@@ -61,6 +64,16 @@ var HttpClient *Client
 
 func InitClient(token string) {
 	HttpClient = &Client{token: token}
+}
+
+func filterByThrottle(apiName string) {
+	for {
+		if tht.tryByApi(apiName) {
+			return
+		}
+		fmt.Printf("Block by throttle apiName %s, sleep for 2 seconds\n", apiName)
+		time.Sleep(time.Second * 2)
+	}
 }
 
 func (c *Client) makeBody(apiName, fields string, params map[string]interface{}) (io.Reader, error) {
@@ -115,6 +128,7 @@ func (c *Client) requestWithRetries(body io.Reader, retries int) (*Response, err
 }
 
 func fetchTushareRawData(apiName, fields string, params map[string]any) (*Response, error) {
+	filterByThrottle(apiName)
 	reqBody, err := HttpClient.makeBody(apiName, fields, params)
 	if err != nil {
 		return nil, err

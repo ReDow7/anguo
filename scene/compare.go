@@ -367,7 +367,7 @@ func CompareValueOfAssessmentWithPriceNow(tsCode string, assessmentValueGiven *f
 		return nil, nil, nil, err
 	}
 	fmt.Printf("CompareValueOfAssessmentWithPriceNow -> tsCode : %s price %f vs assement value %f \n",
-		tsCode, *price, assessmentValues.ValueUnderSustainableGrowthAt6Percent)
+		tsCode, (*price)/100000000, assessmentValues.ValueUnderSustainableGrowthAt6Percent/100000000)
 	ratio := assessmentValues.ValueUnderSustainableGrowthAt6Percent / *price
 	return &assessmentValues.ValueUnderSustainableGrowthAt6Percent, price, &ratio, nil
 }
