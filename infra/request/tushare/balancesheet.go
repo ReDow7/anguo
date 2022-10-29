@@ -145,6 +145,7 @@ func getBalanceSheetFromTushare(code, date string) (*model.BalanceSheet, error) 
 		fieldInvestLossUnconf,
 		fieldMinorityInt,
 		fieldTotalHldrEqyExcMinInt,
+		fieldTotalHldrEqyIncMinInt,
 		fieldTotalLiabHldrEqy,
 		fieldLtPayrollPayable,
 		fieldOthCompIncome,
