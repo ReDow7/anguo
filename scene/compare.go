@@ -59,7 +59,7 @@ func readHistoryFromFile() map[string]*dataSavedEntry {
 	lines := strings.Split(saved, "\n")
 	for _, line := range lines {
 		parts := strings.Split(line, ",")
-		if len(parts) != 3 {
+		if len(parts) != 4 {
 			fmt.Printf("a valid line from file : %s\n", line)
 			continue
 		}
