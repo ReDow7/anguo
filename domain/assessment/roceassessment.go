@@ -8,6 +8,7 @@ type ROCEAssessmentResult struct {
 	ValueUnderSustainableGrowthAt4Percent float64
 	ValueUnderSustainableGrowthAt6Percent float64
 	ValueUnderSustainableGrowthAt8Percent float64
+	Saturation                            float64
 }
 
 func ROCEAssessment(code string, date string, WACC float64) (*ROCEAssessmentResult, error) {
@@ -30,5 +31,7 @@ func ROCEAssessment(code string, date string, WACC float64) (*ROCEAssessmentResu
 		re/(WACC-0.06) - sheet.MinorityInterests
 	value.ValueUnderSustainableGrowthAt8Percent = sheet.TotalEquityOfOwnersExcludeMinorityInterests +
 		re/(WACC-0.08) - sheet.MinorityInterests
+
+	value.Saturation = sheet.NetFinancialAssert(statement.Revenue) / value.ValueUnderSustainableGrowthAt6Percent
 	return &value, nil
 }

@@ -26,6 +26,7 @@ type dataSavedEntry struct {
 	code            string
 	assessmentValue float64
 	date            string
+	saturation      float64
 }
 
 type CompareResult struct {
@@ -34,10 +35,13 @@ type CompareResult struct {
 	PriceValue          float64
 	averageDividendRate float64
 	alerts              []AlertInfo
+	saturation          float64
 }
 
 type historyCompareResult struct {
 	code                string
+	name                string
+	appear              bool
 	compareRatio        float64
 	averageDividendRate float64
 	alertInfo           []AlertInfo
@@ -64,8 +68,13 @@ func readHistoryFromFile() map[string]*dataSavedEntry {
 			fmt.Printf("a valid value line from file : %s\n", line)
 			continue
 		}
+		saturation, err := strconv.ParseFloat(parts[3], 64)
+		if err != nil {
+			fmt.Printf("a valid saturation line from file : %s\n", line)
+			continue
+		}
 		ret[parts[0]] = &dataSavedEntry{
-			code: parts[0], date: parts[1], assessmentValue: value,
+			code: parts[0], date: parts[1], assessmentValue: value, saturation: saturation,
 		}
 	}
 	fmt.Printf("%d lines read from file successfully\n", len(ret))
@@ -80,7 +89,7 @@ func saveDataToFile(data map[string]*dataSavedEntry) {
 	var buf bytes.Buffer
 	for _, entry := range data {
 		buf.WriteString(strings.Join([]string{entry.code, entry.date,
-			fmt.Sprintf("%.2f", entry.assessmentValue)}, ","))
+			fmt.Sprintf("%.2f,%.2f", entry.assessmentValue, entry.saturation)}, ","))
 		buf.WriteString("\n")
 	}
 	err := dal.WriteToFileOverWrite(dataFileName, buf.String())
@@ -99,8 +108,12 @@ func CompareAllStockValueOfAssessmentWithPriceNow(compareThreshold float64, numb
 	historyAssessmentValues := readHistoryFromFile()
 	endDate := common.GetLastYearEndDate()
 	var picks []*CompareResult
+	var myHolders []*CompareResult
+	var codeToName = make(map[string]string)
+	myHoldersCodes := tushare.GetMyHolderCodes()
 	for i, stock := range stocks {
 		fmt.Printf("compare process %d/%d\n", i, len(stocks))
+		codeToName[stock.Code] = stock.Name
 		if i == numberLimit {
 			fmt.Printf("touch number limit %d\n", numberLimit)
 			break
@@ -108,7 +121,7 @@ func CompareAllStockValueOfAssessmentWithPriceNow(compareThreshold float64, numb
 		if !hasListLongThanThreeYears(&stock) {
 			continue
 		}
-		pick, ratio, mv, err := isCompareRatioMoreThanThreshold(
+		pick, ratio, mv, saturation, err := isCompareRatioMoreThanThreshold(
 			historyAssessmentValues, stock.Code, endDate, compareThreshold)
 		if err != nil {
 			fmt.Printf("error when comapre on code %s and date %s, %v\n", stock.Code, endDate, err)
@@ -116,34 +129,38 @@ func CompareAllStockValueOfAssessmentWithPriceNow(compareThreshold float64, numb
 		}
 		if pick {
 			picks = append(picks, &CompareResult{
-				Stock: stock, Ratio: ratio, PriceValue: mv,
+				Stock: stock, Ratio: ratio, PriceValue: mv, saturation: saturation,
+			})
+		}
+		if isInMyHolders(stock.Code, myHoldersCodes) {
+			myHolders = append(myHolders, &CompareResult{
+				Stock: stock, Ratio: ratio, PriceValue: mv, saturation: saturation,
 			})
 		}
 	}
-	saveDataToFile(historyAssessmentValues)
-	outputCompareResult(picks, endDate)
-	return picks, nil
-}
-
-func outputCompareResult(results []*CompareResult, endDate string) {
-	if len(results) <= 0 {
-		fmt.Println("--NO COMPARE RESULT THIS TIME--")
-		return
-	}
-	var buf bytes.Buffer
-	history := readHistoryCompareResultFromFile()
 	listBefore := make(map[string]*historyCompareResult)
+	history := readHistoryCompareResultFromFile()
 	for _, saved := range history {
 		listBefore[saved.code] = saved
 	}
+	for _, e := range listBefore {
+		e.name = codeToName[e.code]
+	}
+	saveDataToFile(historyAssessmentValues)
+	outputCompareResult(myHolders, picks, endDate, listBefore)
+	return picks, nil
+}
+
+func outputCompareResult(myHolders, results []*CompareResult, endDate string, listBefore map[string]*historyCompareResult) {
+	var buf bytes.Buffer
 	sort.Slice(results, func(i, j int) bool {
 		return results[i].Ratio > results[j].Ratio
 	})
 	if outputToFile() {
-		buf.WriteString("Code\tName\tRatio\tpriceValue\tIndustry\tDividend\tAlertInfo\n")
+		buf.WriteString("Code\tName\tRatio\tpriceValue\tIndustry\tDividend\tAlertInfo\tsaturation\n")
 	}
 
-	fmt.Println("Code\tName\tRatio\tpriceValue\tIndustry\tDividend\tAlertInfo")
+	fmt.Println("Code\tName\tRatio\tpriceValue\tIndustry\tDividend\tAlertInfo\tsaturation")
 	for _, result := range results {
 		if listBefore[result.Stock.Code] == nil {
 			continue
@@ -158,19 +175,48 @@ func outputCompareResult(results []*CompareResult, endDate string) {
 		result.averageDividendRate = saved.averageDividendRate
 		result.alerts = saved.alertInfo
 		if outputToFile() {
-			buf.WriteString(fmt.Sprintf("%s\t%s\t%.2f\t%.2fm\t%s\t%.2f\t%s\n", result.Stock.Code, result.Stock.Name, result.Ratio,
+			buf.WriteString(fmt.Sprintf("%s\t%s\t%.2f\t%.2fm\t%s\t%.2f\t%s\t%.2f\n", result.Stock.Code, result.Stock.Name, result.Ratio,
 				result.PriceValue/1000000.0, result.Stock.Industry,
-				result.averageDividendRate, generateAlertInfoToSave(result.alerts)))
+				result.averageDividendRate, generateAlertInfoToSave(result.alerts), result.saturation))
 		}
-		fmt.Printf("%s\t%s\t%.2f\t%.2fm\t%s\t%.2f\t%s\n", result.Stock.Code, result.Stock.Name, result.Ratio,
+		fmt.Printf("%s\t%s\t%.2f\t%.2fm\t%s\t%.2f\t%s\t%.2f\n", result.Stock.Code, result.Stock.Name, result.Ratio,
 			result.PriceValue/1000000.0, result.Stock.Industry,
-			result.averageDividendRate, generateAlertInfoToSave(result.alerts))
+			result.averageDividendRate, generateAlertInfoToSave(result.alerts), result.saturation)
 	}
 	if outputToFile() {
 		buf.WriteString("--NEW LIST OF THIS TIME--\n")
 	}
 	fmt.Println("--NEW LIST OF THIS TIME--")
 	for _, result := range results {
+		if listBefore[result.Stock.Code] != nil {
+			listBefore[result.Stock.Code].appear = true
+			continue
+		}
+		dividendRate := collectAverageDividendRate(result.Stock.Code, endDate)
+		alerts := CollectAlertInfosForCodeAndDataGive(result.Stock.Code, endDate)
+		result.averageDividendRate = dividendRate
+		result.alerts = alerts
+		if outputToFile() {
+			buf.WriteString(fmt.Sprintf("%s\t%s\t%.2f\t%.2fm\t%s\t%.2f\t%s\t%.2f\n", result.Stock.Code, result.Stock.Name, result.Ratio,
+				result.PriceValue/1000000.0, result.Stock.Industry,
+				result.averageDividendRate, generateAlertInfoToSave(result.alerts), result.saturation))
+		}
+		fmt.Printf("%s\t%s\t%.2f\t%.2fm\t%s\t%.2f\t%s\t%.2f\n", result.Stock.Code, result.Stock.Name, result.Ratio,
+			result.PriceValue/1000000.0, result.Stock.Industry,
+			result.averageDividendRate, generateAlertInfoToSave(result.alerts), result.saturation)
+	}
+	fmt.Println("--NOT SHOWED THIS TIME--")
+	for _, result := range listBefore {
+		if result.appear {
+			continue
+		}
+		if outputToFile() {
+			buf.WriteString(fmt.Sprintf("%s\t%s\n", result.code, result.name))
+		}
+		fmt.Printf("%s\t%s\n", result.code, result.name)
+	}
+	fmt.Println("--MY HOLDER--")
+	for _, result := range myHolders {
 		if listBefore[result.Stock.Code] != nil {
 			continue
 		}
@@ -179,13 +225,13 @@ func outputCompareResult(results []*CompareResult, endDate string) {
 		result.averageDividendRate = dividendRate
 		result.alerts = alerts
 		if outputToFile() {
-			buf.WriteString(fmt.Sprintf("%s\t%s\t%.2f\t%.2fm\t%s\t%.2f\t%s\n", result.Stock.Code, result.Stock.Name, result.Ratio,
+			buf.WriteString(fmt.Sprintf("%s\t%s\t%.2f\t%.2fm\t%s\t%.2f\t%s\t%.2f\n", result.Stock.Code, result.Stock.Name, result.Ratio,
 				result.PriceValue/1000000.0, result.Stock.Industry,
-				result.averageDividendRate, generateAlertInfoToSave(result.alerts)))
+				result.averageDividendRate, generateAlertInfoToSave(result.alerts), result.saturation))
 		}
-		fmt.Printf("%s\t%s\t%.2f\t%.2fm\t%s\t%.2f\t%s\n", result.Stock.Code, result.Stock.Name, result.Ratio,
+		fmt.Printf("%s\t%s\t%.2f\t%.2fm\t%s\t%.2f\t%s\t%.2f\n", result.Stock.Code, result.Stock.Name, result.Ratio,
 			result.PriceValue/1000000.0, result.Stock.Industry,
-			result.averageDividendRate, generateAlertInfoToSave(result.alerts))
+			result.averageDividendRate, generateAlertInfoToSave(result.alerts), result.saturation)
 	}
 	saveCompareResultToFile(results)
 	if outputToFile() {
@@ -266,7 +312,10 @@ func readHistoryCompareResultFromFile() []*historyCompareResult {
 			continue
 		}
 		ret = append(ret, &historyCompareResult{
-			parts[0], value, averageDividendRate, parseAlertInfo(parts[3]),
+			code:                parts[0],
+			compareRatio:        value,
+			averageDividendRate: averageDividendRate,
+			alertInfo:           parseAlertInfo(parts[3]),
 		})
 	}
 	fmt.Printf("%d lines read from compare history file successfully\n", len(ret))
@@ -303,22 +352,21 @@ func generateAlertInfoToSave(infos []AlertInfo) string {
 
 func isCompareRatioMoreThanThreshold(historyAssessmentValues map[string]*dataSavedEntry,
 	tsCode, endDate string, threshold float64) (
-	bool, float64, float64, error) {
+	bool, float64, float64, float64, error) {
 	var err error
-	var ratio *float64
-	var mv *float64
+	var ratio, mv, saturation *float64
 	needCalAssessment := true
 	if saveEntry, ok := historyAssessmentValues[tsCode]; ok {
 		if saveEntry.date == endDate {
-			_, mv, ratio, err = CompareValueOfAssessmentWithPriceNow(tsCode, &saveEntry.assessmentValue)
+			_, mv, ratio, saturation, err = CompareValueOfAssessmentWithPriceNow(tsCode, &saveEntry.assessmentValue)
 			needCalAssessment = false
 		}
 	}
 	if needCalAssessment {
 		var value *float64
-		value, mv, ratio, err = CompareValueOfAssessmentWithPriceNow(tsCode, nil)
+		value, mv, ratio, saturation, err = CompareValueOfAssessmentWithPriceNow(tsCode, nil)
 		if err != nil {
-			return false, 0, 0, err
+			return false, 0, 0, 0, err
 		}
 		historyAssessmentValues[tsCode] = &dataSavedEntry{
 			code:            tsCode,
@@ -327,9 +375,9 @@ func isCompareRatioMoreThanThreshold(historyAssessmentValues map[string]*dataSav
 		}
 	}
 	if err != nil {
-		return false, 0, 0, err
+		return false, 0, 0, 0, err
 	}
-	return *ratio > threshold, *ratio, *mv, nil
+	return *ratio > threshold, *ratio, *mv, *saturation, nil
 }
 
 func hasListLongThanThreeYears(stock *model.Stock) bool {
@@ -344,7 +392,7 @@ func hasListLongThanThreeYears(stock *model.Stock) bool {
 }
 
 func CompareValueOfAssessmentWithPriceNow(tsCode string, assessmentValueGiven *float64) (
-	assessmentValue, marketPrice, compareRatio *float64, err error) {
+	assessmentValue, marketPrice, compareRatio *float64, saturation *float64, err error) {
 	var assessmentValues *assessment.ROCEAssessmentResult
 	if assessmentValueGiven != nil {
 		assessmentValues = &assessment.ROCEAssessmentResult{
@@ -355,19 +403,28 @@ func CompareValueOfAssessmentWithPriceNow(tsCode string, assessmentValueGiven *f
 	} else {
 		assessmentValues, err = assessmentFunc(tsCode, common.GetLastYearEndDate(), averageWACC)
 		if err != nil {
-			return nil, nil, nil, err
+			return nil, nil, nil, nil, err
 		}
 	}
 	lastMarketDay, err := tushare.GetLeastCurrentMarketDate()
 	if err != nil {
-		return nil, nil, nil, err
+		return nil, nil, nil, nil, err
 	}
 	price, err := tushare.GetTotalMarketValueOfGiveTsCode(tsCode, lastMarketDay)
 	if err != nil {
-		return nil, nil, nil, err
+		return nil, nil, nil, nil, err
 	}
 	fmt.Printf("CompareValueOfAssessmentWithPriceNow -> tsCode : %s price %f vs assement value %f \n",
 		tsCode, (*price)/100000000, assessmentValues.ValueUnderSustainableGrowthAt6Percent/100000000)
 	ratio := assessmentValues.ValueUnderSustainableGrowthAt6Percent / *price
-	return &assessmentValues.ValueUnderSustainableGrowthAt6Percent, price, &ratio, nil
+	return &assessmentValues.ValueUnderSustainableGrowthAt6Percent, price, &ratio, &assessmentValues.Saturation, nil
+}
+
+func isInMyHolders(code string, codes []string) bool {
+	for _, str := range codes {
+		if code == str {
+			return true
+		}
+	}
+	return false
 }
