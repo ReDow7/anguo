@@ -4,6 +4,10 @@ import "time"
 
 func GetLastYearEndDate() string {
 	now := time.Now()
-	now = now.AddDate(-1, 0, 0)
+	deltaYear := -2
+	if now.Month() >= time.May {
+		deltaYear = -1
+	}
+	now = now.AddDate(deltaYear, 0, 0)
 	return now.Format("2006") + "1231"
 }
