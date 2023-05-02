@@ -217,9 +217,6 @@ func outputCompareResult(myHolders, results []*CompareResult, endDate string, li
 	}
 	fmt.Println("--MY HOLDER--")
 	for _, result := range myHolders {
-		if listBefore[result.Stock.Code] != nil {
-			continue
-		}
 		dividendRate := collectAverageDividendRate(result.Stock.Code, endDate)
 		alerts := CollectAlertInfosForCodeAndDataGive(result.Stock.Code, endDate)
 		result.averageDividendRate = dividendRate
@@ -358,7 +355,7 @@ func isCompareRatioMoreThanThreshold(historyAssessmentValues map[string]*dataSav
 	needCalAssessment := true
 	if saveEntry, ok := historyAssessmentValues[tsCode]; ok {
 		if saveEntry.date == endDate {
-			_, mv, ratio, saturation, err = CompareValueOfAssessmentWithPriceNow(tsCode, &saveEntry.assessmentValue)
+			_, mv, ratio, saturation, err = CompareValueOfAssessmentWithPriceNow(tsCode, saveEntry)
 			needCalAssessment = false
 		}
 	}
@@ -372,6 +369,7 @@ func isCompareRatioMoreThanThreshold(historyAssessmentValues map[string]*dataSav
 			code:            tsCode,
 			date:            endDate,
 			assessmentValue: *value,
+			saturation:      *saturation,
 		}
 	}
 	if err != nil {
@@ -391,14 +389,15 @@ func hasListLongThanThreeYears(stock *model.Stock) bool {
 	return listTime.Before(threeYearsAgo)
 }
 
-func CompareValueOfAssessmentWithPriceNow(tsCode string, assessmentValueGiven *float64) (
+func CompareValueOfAssessmentWithPriceNow(tsCode string, entry *dataSavedEntry) (
 	assessmentValue, marketPrice, compareRatio *float64, saturation *float64, err error) {
 	var assessmentValues *assessment.ROCEAssessmentResult
-	if assessmentValueGiven != nil {
+	if entry != nil {
 		assessmentValues = &assessment.ROCEAssessmentResult{
-			ValueUnderSustainableGrowthAt4Percent: *assessmentValueGiven,
-			ValueUnderSustainableGrowthAt6Percent: *assessmentValueGiven,
-			ValueUnderSustainableGrowthAt8Percent: *assessmentValueGiven,
+			ValueUnderSustainableGrowthAt4Percent: entry.assessmentValue,
+			ValueUnderSustainableGrowthAt6Percent: entry.assessmentValue,
+			ValueUnderSustainableGrowthAt8Percent: entry.assessmentValue,
+			Saturation:                            entry.saturation,
 		}
 	} else {
 		assessmentValues, err = assessmentFunc(tsCode, common.GetLastYearEndDate(), averageWACC)

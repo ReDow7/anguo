@@ -480,7 +480,11 @@ func parseIncomeStatementRecord(endDate string, resp *Response) (*model.IncomeSt
 	if len(statements) == 0 {
 		return nil, fmt.Errorf("can not fetch balance statement from tushare")
 	}
-	return findLastIncomeStatement(endDate, statements), nil
+	ret := findLastIncomeStatement(endDate, statements)
+	if ret != nil {
+		return ret, nil
+	}
+	return nil, fmt.Errorf("error when read income %s", endDate)
 }
 
 func findLastIncomeStatement(endData string, statements []model.IncomeStatement) *model.IncomeStatement {
@@ -490,6 +494,9 @@ func findLastIncomeStatement(endData string, statements []model.IncomeStatement)
 		if states.EndDate == endData {
 			buf = append(buf, states)
 		}
+	}
+	if len(buf) == 0 {
+		return nil
 	}
 	return &buf[0]
 }
