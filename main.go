@@ -32,6 +32,13 @@ func choiceAndRunAScene() {
 			fmt.Printf("error in all %v\n", err)
 			os.Exit(1)
 		}
+	} else if Scene == "daily" {
+		scene.OutputFile = ""
+		err := scene.CompareMyHolderOfAssessmentWithPriceDaily()
+		if err != nil {
+			fmt.Printf("error in daily %v\n", err)
+			os.Exit(1)
+		}
 	}
 }
 
