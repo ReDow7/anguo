@@ -61,12 +61,12 @@ func readHistoryFromFile() map[string]*dataSavedEntry {
 	for _, line := range lines {
 		parts := strings.Split(line, ",")
 		if len(parts) != 4 {
-			fmt.Printf("a valid line from file : %s\n", line)
+			fmt.Printf("a unvalid line from file : %s\n", line)
 			continue
 		}
 		value, err := strconv.ParseFloat(parts[2], 64)
 		if err != nil {
-			fmt.Printf("a valid value line from file : %s\n", line)
+			fmt.Printf("a unvalid value line from file : %s\n", line)
 			continue
 		}
 		saturation, err := strconv.ParseFloat(parts[3], 64)

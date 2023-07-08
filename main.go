@@ -9,9 +9,10 @@ import (
 )
 
 var (
-	Token  = ""
-	Scene  = ""
-	Output = ""
+	Token   = ""
+	Scene   = ""
+	Output  = ""
+	OneCode = ""
 )
 
 func main() {
@@ -39,6 +40,13 @@ func choiceAndRunAScene() {
 			fmt.Printf("error in daily %v\n", err)
 			os.Exit(1)
 		}
+	} else if Scene == "one" {
+		scene.OutputFile = ""
+		err := scene.CompareOneOfAssessmentWithPriceDaily(OneCode)
+		if err != nil {
+			fmt.Printf("error in one %v\n", err)
+			os.Exit(1)
+		}
 	}
 }
 
@@ -46,6 +54,7 @@ func parseTokenFromCmdParams() {
 	flag.StringVar(&Token, "token", "", "tushare token ")
 	flag.StringVar(&Scene, "scene", "", "application scene ")
 	flag.StringVar(&Output, "output", "", "file path to output result ")
+	flag.StringVar(&OneCode, "code", "", "code used in scene one")
 	flag.Parse()
 	if Token == "" {
 		panic("can not run with no tushare token")
