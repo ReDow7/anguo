@@ -36,6 +36,7 @@ type CompareResult struct {
 	averageDividendRate float64
 	alerts              []AlertInfo
 	saturation          float64
+	odds                float64
 }
 
 type historyCompareResult struct {
