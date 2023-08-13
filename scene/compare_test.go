@@ -62,7 +62,7 @@ func TestCompareValueOfAssessmentWithAllStock(t *testing.T) {
 
 func TestCompareValueOfAssessmentWithPriceNow(t *testing.T) {
 	tushare.InitClient(tushare.GetTokenFromFile())
-	_, _, date, err := CompareValueOfAssessmentWithPriceNow("603886.SH", nil)
+	_, _, date, _, err := CompareValueOfAssessmentWithPriceNow("603886.SH", nil)
 	if err != nil {
 		t.Errorf("TestCompareValueOfAssessmentWithPriceNow return error %v", err)
 		return
